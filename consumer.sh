@@ -5,9 +5,6 @@
 #   and it cannot acquire the lock immediately, the got task will be lost.
 
 # Input ----------------------------------
-lock_file=./.lock/mutex.lock
-task_queue_file=./.lock/task_queue.txt
-
 job_time_in_seconds=86400 # 24 hours
 job_time_for_extra=7200 # 2 hours
 
@@ -22,6 +19,8 @@ output_date_format="--rfc-3339=seconds"
 
 job_start_time_in_seconds=$(date +%s)
 try_number=0
+
+source ./lib/task_queue.sh
 
 while [ $(( $(date +%s) - $job_start_time_in_seconds )) -lt $(($job_time_in_seconds - $job_time_for_extra)) ]; do
     # Check the number of background jobs and if it is less than the limit,
@@ -41,25 +40,7 @@ while [ $(( $(date +%s) - $job_start_time_in_seconds )) -lt $(($job_time_in_seco
     try_number=$(( $try_number + 1 ))
 
     # Get task from the task queue
-    task=$(
-    (
-        # Critical section
-        # 1. Acquire mutual exclusion lock
-        # 2. Dequeue a task
-        # 3. Release the lock
-        #=====================================
-        flock -x $lock
-
-        first_line=$(head -n 1 $task_queue_file)  
-        tail -n +2 $task_queue_file > $task_queue_file.tmp
-        mv $task_queue_file.tmp $task_queue_file
-
-        flock -u $lock
-        #=====================================
-
-        # Return result to the caller
-        echo -n $first_line
-    ) {lock}>$lock_file)
+    task=$(dequeue_task)
 
     if [ ! -n "$task" ]; then
         echo `date $output_date_format`"; No task"

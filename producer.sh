@@ -1,18 +1,7 @@
 #!/bin/bash -eu
 
-# Input ----------------------------------
-lock_file=./.lock/mutex.lock
-task_queue_file=./.lock/task_queue.txt
-# ----------------------------------------
+source ./lib/task_queue.sh
 
 for i in `seq 0 99`;do
-    (
-        flock -x $lock
-        {
-            # Critical section
-            echo $i > $task_queue_file
-            sleep 1
-        }
-        flock -u $lock
-    ) {lock}>$lock_file
+    enqueue_task $i
 done

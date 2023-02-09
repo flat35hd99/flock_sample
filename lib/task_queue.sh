@@ -32,8 +32,8 @@ function dequeue_task() {
         flock -u $lock
         # =========================
 
-        echo $first_line
+        echo -n $first_line
     ) {lock}>$lock_file
     )
-    echo $task
+    echo -n $task
 }

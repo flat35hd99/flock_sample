@@ -1,15 +1,18 @@
 #!/bin/bash -eu
 
-lock_file=/tmp/flock_sample.lock
-text_file=/tmp/flock_sample.txt
+# Input ----------------------------------
+lock_file=./.lock/mutex.lock
+task_queue_file=./.lock/task_queue.txt
+# ----------------------------------------
 
-exec {lock}<>"$lock_file"
-{
-    flock -x $lock
-    {
-        # Critical section
-        echo "Hello, world!" > $text_file
-        sleep 5
-    }
-    flock -u $lock
-}
+for i in `seq 0 99`;do
+    (
+        flock -x $lock
+        {
+            # Critical section
+            echo $i > $task_queue_file
+            sleep 1
+        }
+        flock -u $lock
+    ) {lock}>$lock_file
+done
